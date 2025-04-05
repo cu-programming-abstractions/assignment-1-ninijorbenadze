@@ -1,4 +1,5 @@
 #include "Fire.h"
+#include "random.h"
 using namespace std;
 
 void updateFire(Grid<int>& fire) {
@@ -6,7 +7,61 @@ void updateFire(Grid<int>& fire) {
      * when this function isn't implemented. Delete this comment and the next line, then
      * implement this function.
      */
-    (void) fire;
+    //(void) fire;
+
+    for (int row = 1; row < fire.numRows(); row++)
+    {
+        for (int col = 0; col < fire.numCols(); col++)
+        {
+
+            // 100% chance case
+            if (fire.numCols() == 1)
+            {
+                fire[row - 1][col] = fire[row][col];
+
+                if (fire[row][col] != 0 && randomChance(2.0/3))
+                {
+                    fire[row - 1][col] --;
+                }
+
+            }
+            // 1/2 chance case (left)
+            else if (col == 0)
+            {
+                int random = randomInteger(0, 1);
+                fire[row - 1][col + random] = fire[row][col];
+
+                if (fire[row][col] != 0 && randomChance(2.0/3))
+                {
+                    fire[row - 1][col + random] --;
+                }
+            }
+            // 1/2 chance case (right)
+            else if (col == fire.numCols() - 1)
+            {
+                int random = randomInteger(0, 1);
+                fire[row - 1][col - random] = fire[row][col];
+
+                if (fire[row][col] != 0 && randomChance(2.0/3))
+                {
+                    fire[row - 1][col - random] --;
+                }
+            }
+            // 1/3 chance case
+            else
+            {
+                int random = randomInteger(-1, 1);
+                fire[row - 1][col + random] = fire[row][col];
+
+                if (fire[row][col] != 0 && randomChance(2.0/3))
+                {
+                    fire[row - 1][col + random] --;
+                }
+            }
+
+        }
+    }
+
 }
 
 
@@ -47,15 +102,15 @@ PROVIDED_TEST("updateFire does not change bottom row.") {
 }
 
 namespace {
-    /* Helper function to test if the specified value matches one of the items
+/* Helper function to test if the specified value matches one of the items
      * from the given list.
      */
-    bool isOneOf(int) {
-        return false;
-    }
-    template <typename First, typename... Rest> bool isOneOf(int value, First option1, Rest... remaining) {
-        return value == option1 || isOneOf(value, remaining...);
-    }
+bool isOneOf(int) {
+    return false;
+}
+template <typename First, typename... Rest> bool isOneOf(int value, First option1, Rest... remaining) {
+    return value == option1 || isOneOf(value, remaining...);
+}
 }
 
 PROVIDED_TEST("updateFire copies heat values upward.") {
@@ -224,30 +279,30 @@ PROVIDED_TEST("updateFire shifts values horizontally with the correct probabilit
 
     /* Run the experiment and see how it goes. */
     if (!ChiSquaredTesting::isClose({ leftProb, centerProb, rightProb, noneProb }, [&] {
-        /* Clone the original fire and update it. */
-        auto fire = pattern;
-        updateFire(fire);
+            /* Clone the original fire and update it. */
+            auto fire = pattern;
+            updateFire(fire);
 
-        /* Confirm the border regions are all zeros. */
-        EXPECT_EQUAL(fire[0][0], 0);
-        EXPECT_EQUAL(fire[0][1], 0);
-        EXPECT_EQUAL(fire[0][5], 0);
-        EXPECT_EQUAL(fire[0][6], 0);
+            /* Confirm the border regions are all zeros. */
+            EXPECT_EQUAL(fire[0][0], 0);
+            EXPECT_EQUAL(fire[0][1], 0);
+            EXPECT_EQUAL(fire[0][5], 0);
+            EXPECT_EQUAL(fire[0][6], 0);
 
-        /* At most one of the central values should be nonzero. */
-        int nonzero = 0;
-        if (fire[0][2] != 0) nonzero++;
-        if (fire[0][3] != 0) nonzero++;
-        if (fire[0][4] != 0) nonzero++;
+            /* At most one of the central values should be nonzero. */
+            int nonzero = 0;
+            if (fire[0][2] != 0) nonzero++;
+            if (fire[0][3] != 0) nonzero++;
+            if (fire[0][4] != 0) nonzero++;
 
-        EXPECT(isOneOf(nonzero, 0, 1));
+            EXPECT(isOneOf(nonzero, 0, 1));
 
-        /* See which type it is. */
-        if      (fire[0][2] != 0) return 0;
-        else if (fire[0][3] != 0) return 1;
-        else if (fire[0][4] != 0) return 2;
-        else                      return 3;
-    })) {
+            /* See which type it is. */
+            if      (fire[0][2] != 0) return 0;
+            else if (fire[0][3] != 0) return 1;
+            else if (fire[0][4] != 0) return 2;
+            else                      return 3;
+        })) {
         SHOW_ERROR("Fire cells were not shifted left/center/right uniformly at random.");
     }
 }
@@ -276,27 +331,27 @@ PROVIDED_TEST("updateFire cools fire with correct probability.") {
     const double sameProb = 19.0 / 81.0;
 
     if (!ChiSquaredTesting::isClose({ noneProb, coolProb, sameProb }, [&] {
-        /* Clone the original fire and update it. */
-        auto fire = pattern;
-        updateFire(fire);
+            /* Clone the original fire and update it. */
+            auto fire = pattern;
+            updateFire(fire);
 
-        /* See which type it is. */
-        int found = 0;
-        int result = 0;
-        for (int col = 2; col <= 4; col++) {
-            if (fire[0][col] == 4) {
-                found++;
-                result = 1;
-            } else if (fire[0][col] == 5) {
-                found++;
-                result = 2;
+            /* See which type it is. */
+            int found = 0;
+            int result = 0;
+            for (int col = 2; col <= 4; col++) {
+                if (fire[0][col] == 4) {
+                    found++;
+                    result = 1;
+                } else if (fire[0][col] == 5) {
+                    found++;
+                    result = 2;
+                }
             }
-        }
-        if (found > 1) {
-            SHOW_ERROR("Heat was copied up to multiple locations.");
-        }
-        return result;
-    })) {
+            if (found > 1) {
+                SHOW_ERROR("Heat was copied up to multiple locations.");
+            }
+            return result;
+        })) {
         SHOW_ERROR("Fire cells were not cooled with probability 2/3.");
     }
 }
